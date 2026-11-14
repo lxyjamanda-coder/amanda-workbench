@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Amanda工作台">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBE3EA">
+<title>Amanda 小红书工作台</title>
+<style>
+:root{
+  --bg1:#FBE0E7; --bg2:#FDEFEF; --bg3:#FAF6F3;
+  --ink:#4A3A3F; --ink2:#8B757C; --muted:#B09AA1;
+  --card:#FFFFFF; --chip:#FCE9EE; --chipTxt:#7D5B66;
+  --accent:#EE9DB1; --accent2:#E47E99; --accentDeep:#C4627E;
+  --line:#F5E4E8; --sage:#8FA383; --sageBg:#EDF2E8;
+  --shadow:0 8px 22px rgba(190,140,155,.10);
+  --r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+  color:var(--ink);
+  background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 34%,var(--bg3) 72%);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+#app{display:flex;min-height:100dvh}
+
+.rail{
+  position:fixed;left:0;top:0;bottom:0;width:86px;z-index:30;
+  background:rgba(255,251,250,.72);
+  backdrop-filter:saturate(140%) blur(14px);-webkit-backdrop-filter:saturate(140%) blur(14px);
+  border-right:1px solid rgba(255,255,255,.7);
+  padding:calc(14px + env(safe-area-inset-top)) 6px calc(14px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:2px;overflow-y:auto;
+}
+.brand{display:flex;flex-direction:column;align-items:center;gap:5px;padding:2px 0 14px}
+.brandMark{width:36px;height:36px;border-radius:50%;background:linear-gradient(145deg,#EFB3C3,#D9748F);
+  color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 10px rgba(214,120,145,.25)}
+.brandTxt{font-size:9.5px;color:var(--muted);letter-spacing:.08em}
+.navItem{
+  appearance:none;border:0;background:transparent;cursor:pointer;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:9px 2px 8px;border-radius:14px;transition:.18s;width:100%;
+}
+.navItem .ico{width:38px;height:38px;border-radius:12px;background:#FFF6F4;
+  display:flex;align-items:center;justify-content:center;transition:.18s;
+  box-shadow:inset 0 0 0 1px rgba(238,205,212,.5)}
+.navItem .ico svg{width:19px;height:19px;stroke:#B18B97;stroke-width:1.7;fill:none;transition:.18s}
+.navItem .lbl{font-size:10.5px;color:#9A8189;letter-spacing:.03em;line-height:1.2;text-align:center}
+.navItem.active{background:rgba(255,255,255,.9);box-shadow:0 4px 12px rgba(200,155,168,.16)}
+.navItem.active .ico{background:linear-gradient(145deg,#F2B6C6,#DF8299);box-shadow:0 4px 10px rgba(214,120,145,.22)}
+.navItem.active .ico svg{stroke:#fff}
+.navItem.active .lbl{color:#7E4D5D;font-weight:600}
+
+.sheet{margin-left:86px;flex:1;padding:calc(12px + env(safe-area-inset-top)) 12px calc(48px + env(safe-area-inset-bottom));max-width:560px}
+.topBar{display:flex;align-items:center;gap:10px;padding:2px 4px 14px}
+.accSwitch{display:flex;gap:7px;padding:0 4px 13px}
+.accBtn{appearance:none;border:0;font-family:inherit;cursor:pointer;flex:1;padding:9px 8px;border-radius:13px;
+  background:rgba(255,255,255,.68);color:#93787F;font-size:11.5px;letter-spacing:.02em;line-height:1.35;transition:.18s;
+  box-shadow:inset 0 0 0 1px rgba(238,205,212,.7)}
+.accBtn b{display:block;font-size:12px;font-weight:600}
+.accBtn small{display:block;font-size:9px;opacity:.75;margin-top:2px;font-weight:400}
+.accBtn.on{background:linear-gradient(135deg,#F3AFC2,#E5839B);color:#fff;box-shadow:0 5px 13px rgba(220,130,150,.24)}
+.accBtn.on small{opacity:.9}
+.topMark{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 8px rgba(190,150,160,.14);font-size:14px;color:var(--accentDeep)}
+.topTitle{font-size:13px;letter-spacing:.06em;color:#7C5F68}
+.topTitle b{font-weight:600;color:#5E434C}
+.topDate{margin-left:auto;text-align:right}
+.topDateNum{font-size:17px;font-weight:600;color:#7A4E5C;letter-spacing:.02em;line-height:1}
+.topDateSub{font-size:9.5px;color:var(--muted);letter-spacing:.1em;margin-top:3px}
+
+.emptyWrap{min-height:62vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.emptyCard{background:rgba(255,255,255,.7);border-radius:var(--r);padding:22px 26px;text-align:center;
+  box-shadow:var(--shadow);color:#BFA3AC;font-size:12.5px;letter-spacing:.08em;line-height:2}
+.emptyCard span{display:block;color:#8C6C77;font-size:13.5px;letter-spacing:.04em;margin-bottom:6px}
+
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.cardHead{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.cardIco{width:28px;height:28px;border-radius:9px;background:#FFF2EF;display:flex;align-items:center;justify-content:center;flex:none}
+.cardIco svg{width:15px;height:15px;stroke:#C8889A;stroke-width:1.7;fill:none}
+.cardTitle{font-size:14px;font-weight:600;letter-spacing:.02em;flex:1}
+.cardHint{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.cardText{font-size:12.5px;line-height:1.9;color:#6E5B62}
+
+.hero{background:linear-gradient(135deg,#F2A9BE 0%,#F8C7D2 55%,#FBDDE4 100%);
+  border-radius:20px;padding:17px 17px 15px;margin-bottom:13px;color:#fff;
+  box-shadow:0 10px 24px rgba(220,140,160,.26);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-30px;top:-40px;width:110px;height:110px;border-radius:50%;
+  background:rgba(255,255,255,.18)}
+.heroRow{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.heroTitle{font-size:14.5px;font-weight:600;letter-spacing:.04em}
+.heroDate{font-size:10.5px;opacity:.85;letter-spacing:.06em}
+.barTrack{height:6px;border-radius:6px;background:rgba(255,255,255,.35);margin:14px 0 9px;overflow:hidden;position:relative;z-index:1}
+.barFill{height:100%;width:0%;border-radius:6px;background:#fff;transition:width .3s ease}
+.heroFoot{display:flex;justify-content:space-between;font-size:11px;opacity:.95;position:relative;z-index:1}
+.heroFoot b{font-weight:600}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:0;font-family:inherit;cursor:pointer;background:var(--chip);color:var(--chipTxt);
+  font-size:12px;padding:8px 13px;border-radius:999px;transition:.16s;line-height:1.2}
+.chip:active{transform:scale(.97)}
+.chip.on{background:linear-gradient(135deg,#F3AFC2,#E5839B);color:#fff;font-weight:500;box-shadow:0 4px 10px rgba(220,130,150,.22)}
+.chip.ghost{background:#fff;border:1px solid var(--line);color:#8C7379}
+.chip.sage{background:var(--sageBg);color:#617454}
+.chip.sage.on{background:#9BB08D;color:#fff;box-shadow:0 4px 10px rgba(140,160,120,.2)}
+.chip.plain{background:#F7F1EE;color:#8B757C;cursor:default}
+.chip.mini{font-size:10.5px;padding:5px 10px}
+.chip.copy{background:#4A3A3F;color:#fff;cursor:pointer}
+.chip.copy.done{background:#8FA383}
+
+.item{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+.item:last-child{border-bottom:0;padding-bottom:2px}
+.item:first-child{padding-top:2px}
+.dot{width:20px;height:20px;border-radius:50%;border:1.5px solid #EFCEDA;background:#fff;flex:none;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;transition:.16s}
+.item.on .dot{background:#9BB08D;border-color:#9BB08D}
+.itemBody{flex:1}
+.itemLabel{font-size:13px;line-height:1.55;color:#4A3A3F;transition:.16s}
+.itemMeta{font-size:10.5px;color:var(--muted);margin-top:3px;letter-spacing:.02em}
+.item.on .itemLabel{color:#A79A9F;text-decoration:line-through}
+.itemTag{font-size:10px;padding:4px 9px;border-radius:999px;background:#F7F1EE;color:#8B757C;white-space:nowrap;flex:none;margin-top:1px}
+.item.on .itemTag{background:var(--sageBg);color:#617454}
+
+.subHead{display:flex;align-items:center;gap:8px;margin:18px 2px 10px;font-size:11px;letter-spacing:.12em;color:#9B7F89}
+.subHead::after{content:"";flex:1;height:1px;background:rgba(230,200,208,.7)}
+
+.tCard{background:#fff;border-radius:16px;padding:14px 15px;margin-bottom:10px;box-shadow:var(--shadow)}
+.tTop{display:flex;gap:9px;align-items:flex-start}
+.tNo{font-size:13px;font-weight:600;color:#E390A8;flex:none;margin-top:1px;min-width:18px}
+.tTitle{font-size:13.5px;font-weight:600;line-height:1.55;flex:1}
+.tWhy{font-size:11.5px;color:var(--muted);line-height:1.7;margin:7px 0 10px}
+.tPick{margin-top:10px}
+
+details.dCard{background:#fff;border-radius:16px;margin-bottom:9px;box-shadow:var(--shadow);overflow:hidden}
+details.dCard summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;gap:9px;align-items:center}
+details.dCard summary::-webkit-details-marker{display:none}
+details.dCard .idx{font-size:12px;color:#E390A8;font-weight:600;flex:none}
+details.dCard .ttl{font-size:12.5px;font-weight:600;line-height:1.5;flex:1}
+details.dCard .miniTag{font-size:10px;background:var(--chip);color:#8E6570;padding:4px 8px;border-radius:999px;white-space:nowrap}
+details.dCard[open] summary{border-bottom:1px solid var(--line)}
+.dBody{padding:10px 15px 14px;font-size:12px;line-height:1.85;color:#5F4E55}
+.dRow{margin:4px 0}
+.dK{color:#C4627E;font-size:10.5px;letter-spacing:.06em;margin-right:5px}
+.refLink{display:block;font-size:10px;line-height:1.5;color:#B09AA1;font-weight:400;margin-top:4px;word-break:break-all}
+.refLink a{color:#C4627E;text-decoration:none}
+.trendCard{background:#fff;border-radius:16px;margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
+.trendLinkRow{display:flex;align-items:center;gap:8px;padding:12px 12px 0}
+.trendUrl{flex:1;font-size:11px;line-height:1.6;color:var(--muted);word-break:break-all}
+.trendUrl a{color:var(--accentDeep);text-decoration:none}
+.trendPreview{position:relative;margin:12px;aspect-ratio:3/4;border-radius:14px;overflow:hidden;background:#FFF8F6;border:1px solid var(--line)}
+.trendPreview.isEmpty{aspect-ratio:16/9}
+.trendPreview iframe{display:block;width:100%;height:100%;border:0;background:#fff}
+.previewEmpty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:#FFF8F6;color:var(--muted);font-size:11px;line-height:1.8;pointer-events:none}
+.previewNote{margin:-7px 13px 10px;text-align:right;font-size:9.5px;color:var(--muted)}
+.trendHeat{margin:0 12px 12px;padding:10px 12px;background:#FFF8F6;border-radius:12px;font-size:11.5px;line-height:1.7;color:#6E5B62}
+.trendLogic{padding:0 14px 14px}
+.trendTitle{font-size:13.5px;font-weight:600;line-height:1.55;margin-bottom:7px}
+.trendLogicText{font-size:12px;line-height:1.85;color:#5F4E55;white-space:normal}
+
+pre.doc{background:#FFF8F6;border-radius:12px;padding:12px;font-size:12px;line-height:1.85;color:#5A474E;
+  white-space:pre-wrap;word-break:break-word;margin:9px 0 0;font-family:inherit}
+.tl{list-style:none;margin:8px 0 0;padding:0}
+.tl li{display:flex;gap:9px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12px;line-height:1.7;color:#5A474E}
+.tl li:last-child{border-bottom:0}
+.tl .tm{flex:none;width:48px;color:#D07A93;font-size:10.5px;padding-top:2px}
+
+.metric{display:flex;gap:8px;margin-bottom:12px}
+.mCell{flex:1;background:#fff;border-radius:14px;padding:12px 11px;box-shadow:var(--shadow)}
+.mL{font-size:10px;color:var(--muted);letter-spacing:.05em}
+.mV{font-size:17px;font-weight:600;color:#C4627E;margin-top:5px}
+.mV.dim{font-size:14px;font-weight:500;color:#B9A7AD}
+
+.poolRow{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.poolRow:last-child{border-bottom:0}
+.poolName{font-size:13px;font-weight:500;line-height:1.5;flex:1}
+.poolForm{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.6}
+
+.noteBar{background:rgba(255,255,255,.72);border-radius:14px;padding:11px 14px;font-size:11px;
+  line-height:1.7;color:#957E86;margin-bottom:12px;box-shadow:0 3px 10px rgba(190,150,160,.07)}
+.feedBox{width:100%;min-height:104px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+  font-family:inherit;font-size:12px;line-height:1.8;color:#5F4E55;background:#FFFCFB;resize:vertical;outline:none}
+.feedBox:focus{border-color:#EFC3D1;box-shadow:0 0 0 3px rgba(238,157,177,.12)}
+.feedTip{font-size:10.5px;color:var(--muted);margin-top:8px;letter-spacing:.02em}
+
+.cfgRow{margin-bottom:8px}
+.cfgRow label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:4px;letter-spacing:.06em}
+.cfgInput{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-family:inherit;
+  font-size:12px;background:#FFFCFB;outline:none;color:#5F4E55}
+.cfgInput:focus{border-color:#EFC3D1}
+.chatLog{display:flex;flex-direction:column;gap:9px;margin:4px 0 10px}
+.msg{max-width:84%;padding:10px 13px;border-radius:15px;font-size:12.5px;line-height:1.85;
+  white-space:pre-wrap;word-break:break-word;box-shadow:var(--shadow)}
+.msg.me{margin-left:auto;background:linear-gradient(135deg,#F3AFC2,#E5839B);color:#fff;box-shadow:0 5px 13px rgba(220,130,150,.2)}
+.msg.ai{background:#fff;color:#5F4E55}
+.msg.tip{background:#FFF6F4;color:#A2808A;font-size:11px;box-shadow:none;max-width:100%}
+.chatBar{display:flex;gap:8px;align-items:flex-end;flex-wrap:nowrap}
+#netlify-badge,#nl-badge-frame,[id*="netlify-badge"],[id*="badge"],iframe[src*="netlify.com/badge"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#chatMic{flex:none;min-width:56px;padding:12px 10px}
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);
+  max-width:88vw;background:rgba(74,58,63,.95);color:#fff;font-size:12.5px;line-height:1.7;padding:11px 15px;border-radius:14px;
+  opacity:0;pointer-events:none;transition:.22s;z-index:120;box-shadow:0 8px 20px rgba(0,0,0,.18);text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#chatSend{flex:none;min-width:62px;padding:12px 12px}
+.chatInput{flex:1;min-height:46px;max-height:130px;border:1px solid var(--line);border-radius:14px;
+  padding:11px 13px;font-family:inherit;font-size:12.5px;line-height:1.7;background:#fff;outline:none;resize:none;color:#4A3A3F}
+.chatInput:focus{border-color:#EFC3D1;box-shadow:0 0 0 3px rgba(238,157,177,.12)}
+
+@media (min-width:700px){
+  .rail{width:118px;padding-left:12px;padding-right:12px}
+  .sheet{margin-left:118px;padding:22px 26px 70px}
+  .navItem .lbl{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="rail" id="rail">
+    <div class="brand"><div class="brandMark">兰</div><div class="brandTxt">小红书工作台</div></div>
+    <button class="navItem" data-key="overview"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/><path d="M8 15h3"/></svg></span><span class="lbl">概况</span></button>
+    <button class="navItem" data-key="todos"><span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg></span><span class="lbl">待办</span></button>
+    <button class="navItem" data-key="topics"><span class="ico"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3 11c.5 1 1 2 1 3h4c0-1 .5-2 1-3A6 6 0 0 0 12 3z"/></svg></span><span class="lbl">选题</span></button>
+    <button class="navItem" data-key="teardown"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4z"/><path d="M4 12l8 4 8-4"/><path d="M4 17l8 4 8-4"/></svg></span><span class="lbl">灵感</span></button>
+    <button class="navItem" data-key="content"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M8 6l2-3M16 6l-2-3"/><path d="M11 14l4 2-4 2z"/></svg></span><span class="lbl">产出</span></button>
+    <button class="navItem" data-key="pool"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span><span class="lbl">赛马</span></button>
+    <button class="navItem" data-key="review"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M7 16v-5M12 16v-8M17 16v-3"/><path d="M15 5l4 2"/></svg></span><span class="lbl">复盘</span></button>
+    <button class="navItem" data-key="chat"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H9l-5 4V6z"/><path d="M8 10h8M8 13h5"/></svg></span><span class="lbl">对话</span></button>
+  </aside>
+
+  <main class="sheet">
+    <div class="topBar">
+      <div class="topMark">‹</div>
+      <div class="topTitle"><b data-acc-title>兰叙孕中期</b> · 小红书工作台</div>
+      <div class="topDate"><div class="topDateNum" data-d1></div><div class="topDateSub" data-d2></div></div>
+    </div>
+    <div class="accSwitch">
+      <button class="accBtn" data-acc="sale"><b>兰叙孕中期</b><small>带货号 · 自用实测</small></button>
+      <button class="accBtn" data-acc="ip"><b>清醒Amanda</b><small>IP号 · 孕期日常</small></button>
+    </div>
+    <section id="panel">
+      <div class="emptyWrap"><div class="emptyCard"><span>从左侧选一个模块</span>点哪一项，右边才加载哪一项</div></div>
+    </section>
+  </main>
+</div>
+
+<script>
+var COPY = {};
+COPY.cover = "主标：孕中期刷牙想吐，先别硬扛\n副标：味道、泡沫、适合谁一次说清\n角标：二胎孕妈·自用大半个月·不吹不黑";
+COPY.body = "孕中期开始，我刷牙经常刷到一半就想呕，牙龈一碰就出点血。\n\n如果你也怕薄荷味冲、泡沫多，这篇把我换牙膏时看的 3 个点和不适合谁一次说清，别只看“孕妇专用”四个字。\n\n换牙膏之前我踩过两个坑：一个是薄荷味太冲，一入口更想吐；一个是泡沫太多，含着就难受。\n\n现在这管我用了大半个月。我留下它，不是因为包装上写了什么，而是下面三个每天都能自己感受到的细节：\n1. 味道淡，早上起来刷不会反胃\n2. 泡沫细，不用含很久\n3. 刷完口气清爽，一整天没那么闷\n\n缺点也说：它不是一刷就立刻不一样的那种，属于日常用着安稳的类型；喜欢强薄荷感的姐妹可能会觉得不够劲儿。\n\n在我这里选的理由，不是多一个商品链接，而是我把味道、泡沫、真实使用感、缺点和适合谁都先拆开，帮你先判断会不会买错，而不是只说“好用”。\n\n适合：孕中期刷牙想吐、牙龈容易敏感、怕强薄荷的孕妈。\n不适合：喜欢强薄荷感，或期待立刻改变口腔问题的人。\n\n如果你和我的情况接近，可以先在商品卡核对成分和规格，符合自己的需要再选。每个人体质不一样，我用着舒服，不代表人人一样；牙龈持续出血或不适，先咨询医生。";
+COPY.tags = "#孕期口腔护理 #孕妇牙膏 #孕中期 #孕期好物 #孕妈日常 #孕期避坑 #牙龈敏感 #二胎孕妈";
+COPY.script = "0-3s｜侧躺床上，手按胸口｜孕中期一翻身，胸先疼醒的，先别硬扛。\n3-7s｜坐起来披外套｜弹力、承托、缺点一次说清，免得你买错。\n7-15s｜站立、抬手、弯腰三个动作｜先看肩带和下围。我穿了快一个月，抬手不往上跑，坐着也不勒。\n15-23s｜手拉下围，弹力特写｜再看弹力。下围能拉到这里，胸围有变化，也不用硬挤。\n23-30s｜杯型特写，正面讲缺点｜杯型也别跳过。没有钢圈，杯型偏软；想要强承托的，先看清楚这点。\n30-39s｜抱大宝、坐工位、侧躺场景切换｜在我这里选的理由，不是一句“好用”，而是真实上身、缺点和尺码边界都给你看，先帮你判断合不合适。\n39-45s｜侧面坐姿，展示尺码参考｜怕钢圈、胀痛的，先对照商品卡的尺码和面料；胸大的先量下围，再决定。";
+COPY.jy = "画面：3:4 竖屏，1080×1440，30fps，成片约 45 秒\n素材顺序：1 侧躺痛点 → 2 坐起披外套 → 3 站立/抬手/弯腰 → 4 下围弹力特写 → 5 杯型细节 → 6 正面讲缺点 → 7 抱大宝/工位/侧躺 → 8 尺码参考收尾\n字幕：逐句同步，思源黑体，白字浅描边，底部安全区上方 1/5；每屏只突出一个关键词：痛点/弹力/承托/缺点/尺码\n节奏：每 3-8 秒给一个新信息或新证据，删除重复句、长停顿和无效空镜；开头不加问候\n语速：原声自然口语，整体 0.95 倍，每句不超过 12 字\n转场：叠化 0.3 秒，只用 3 处（痛点→展示、场景切换、收尾），其余硬切\nBGM：轻柔钢琴或白噪音，-22dB，不卡点\n调色：原相机直出，提亮 +5，不美颜不加滤镜\n导出：1080×1440 高清，关水印";
+COPY.ipScript = "E1｜孕中期最难受的，不是身体（图文 6 图 · 3:4）\n\nP1 封面：孕中期最难受的，不是身体（卧室床边坐着，手放腰）\nP2 21 周，爬两层楼要扶墙歇一下（小区楼梯）\nP3 晚上翻身，腰像被拽住（床上，手撑腰）\nP4 换来的都是同一句：怀孕都这样（窗边侧脸）\nP5 后来我不解释了，累就躺着（床上半躺）\nP6 你现在几周，最难受的是哪儿？（正脸看镜头）";
+COPY.ipCover = "E1｜封面与发布信息\n\n主文案：孕中期最难受的，不是身体\n副文案：是没人信你真的难受\n\n备选1：孕21周，我学会不解释了\n备选2：不是身体难受，是没人当回事\n备选3：怀孕后最累的，是解释自己\n\n视觉：素颜坐床边或侧躺，手放腰或肚子上，窗边自然光，不磨皮不摆拍\n排版：主文案压上1/3，最多两行，每行不超过12字，白字加深色描边\n比例：3:4 竖版 1080×1440\n\n发布标题：孕中期最难受的，不是身体\n话题：#孕中期 #孕期情绪 #怀孕后才知道 #孕妈日常 #二胎孕期\n置顶评论：我先说：21周，腰。你呢？\n\n提醒：不挂商品、不提价格、不做医疗判断；发布前自审一遍是否在控诉具体的人。";
+COPY.ipBody = "P1 封面：怀孕后最怕听到的一句话\nP2 不是“你要当妈了”，是“你想太多了”\nP3 半夜抽筋，我说疼，他说忍忍\nP4 我没吵，我只是记住了这件事\nP5 后来我开始自己记录身体，不等人问\nP6 如果你也被这样说过，你不是矫情";
+COPY.ipShoot = "P1 卧室床边｜手机立在窗台或水杯上，高度与胸口平；人坐床边、身体略侧，手放腰上；白天靠窗自然光，脸朝窗\nP2 小区楼梯｜手机给家人拿着或放台阶上，蹲低一点仰拍全身；就拍扶墙歇一下那一下，不用看镜头\nP3 床上｜手机举高俯拍 45 度，只拍腰和手，不拍脸；床单拉平，收走杂物\nP4 窗边｜手机放桌上，人侧坐低头，像刚听完那句话；别刻意摆表情\nP5 躺着｜手机与床面平行放枕头边，人平躺、手臂放身侧，拍半身\nP6 正脸｜手机与眼睛齐平，坐窗边，平静看镜头，不笑太多\n统一｜白天拍，不开美颜和滤镜；每张右下角同一位置写页码；竖着拍，别横";
+COPY.ipJy = "比例：3:4 竖版，1080×1440，共 6 张\n素材：卧室床边、小区楼梯、窗边，白天自然光，素颜，不摆拍\n封面：主文案压上 1/3，最多两行，每行不超过 12 字，白字深描边\n内页：每张一句，字号一致，居中偏上，底部留白放页码\n字体：思源黑体 / 苹方，不加花字，不加贴纸\n色调：原相机直出，不加滤镜，不磨皮\n顺序：封面 → 具体动作 → 原话 → 转折 → 收尾提问\n自查：6 张能不能只看图就读完，不能就删字";
+COPY.ipNoteData = "笔记链接：\n账号：清醒Amanda（IP号）\n发布时间：\n形式：图文 / 短视频\n曝光/阅读：\n3秒留存/完播率（视频，如有）：\n点赞：\n收藏：\n评论：\n新增粉丝：\n主页访问：\n评论区高频词：";
+COPY.noteData = "笔记链接：\n账号：带货号 / IP号\n发布时间：\n形式：图文 / 短视频\n关联商品：\n曝光/阅读：\n3秒留存/完播率（视频，如有）：\n阅读时长/读完率（图文，如有）：\n点赞：\n收藏：\n评论：\n商品点击人数：\n成交订单数：\n成交金额：\n退款金额：\n退款后实际佣金：";
+COPY.salesData = "日期：\n商品：\n关联笔记链接：\n曝光（可选）：\n商品点击人数：\n成交订单数：\n成交金额：\n退款金额：\n退款后实际佣金：\n投放工具：薯条 / 聚光 / 未投放\n投放消耗：\n归因订单数：\n归因成交金额：\n定向与时段：\n其他成本（可选）：";
+
+var MODULES = {};
+
+MODULES.overview = {label:"今日概况", html:
+'<div class="hero"><div class="heroRow"><div><div class="heroTitle">今日小红书打卡</div></div><div class="heroDate" data-d3></div></div>'+
+'<div class="barTrack"><div class="barFill" data-bar></div></div>'+
+'<div class="heroFoot"><span>孕21周 · 轻量节奏</span><span>已完成 <b data-done>0</b> / 7 项</span></div></div>'+
+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="cardTitle">今日节奏</span><span class="cardHint">按需选择，不强制日更</span></div>'+
+'<div class="chips" data-group="pace"><button class="chip" data-group="pace" data-val="dual">图文 + 视频（可选）</button><button class="chip" data-group="pace" data-val="photo">只发图文</button><button class="chip" data-group="pace" data-val="shoot">今天只拍不发</button></div></div>'+
+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 16v-5M12 16v-8M17 16v-3"/></svg></span><span class="cardTitle">今天的三个重点</span><span class="cardHint">双11</span></div>'+
+'<div class="cardText">01　拍内衣上身 3 个镜头：站立、抬手、弯腰<br>02　配牙膏图文 6 张图，封面用大字痛点版<br>03　20:30 发图文；内衣视频是备选，按体力和素材质量决定，不凑数量</div></div>'+
+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span><span class="cardTitle">今天要埋的搜索词</span><span class="cardHint">不超过 6 个</span></div>'+
+'<div class="chips"><span class="chip plain">孕中期胸胀</span><span class="chip plain">孕期牙龈出血</span><span class="chip plain">孕妇牙膏</span><span class="chip plain">孕中期疲惫</span><span class="chip plain">待产包清单</span></div></div>'+
+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M12 3l8 4-8 4-8-4 8-4z"/><path d="M4 12l8 4 8-4"/></svg></span><span class="cardTitle">边界提醒</span><span class="cardHint">发布前看一眼</span></div>'+
+'<div class="chips"><span class="chip ghost">蒲公英报备</span><span class="chip ghost">不混生活话题</span><span class="chip ghost">体力优先</span></div></div>'
+};
+
+MODULES.todos = {label:"今日待办", html:
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg></span><span class="cardTitle">今日待办</span><span class="cardHint"><b data-done>0</b> / 7 已完成</span></div>'+
+'<div class="item" data-id="t1"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">内衣上身 3 镜头：站立正面、抬手侧面、弯腰</div><div class="itemMeta">自然光 · 素颜 · 客厅或卧室</div></div><span class="itemTag">轻</span></div>'+
+'<div class="item" data-id="t2"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">口播开场 3 秒录 3 版，挑最自然的一条</div><div class="itemMeta">自然口语 · 不看稿</div></div><span class="itemTag">轻</span></div>'+
+'<div class="item" data-id="t3"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">牙膏图文 6 张：封面、刷牙、成分、台面、总结卡</div><div class="itemMeta">3:4 竖图 · 手机原相机</div></div><span class="itemTag">中</span></div>'+
+'<div class="item" data-id="t4"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">内衣短视频粗剪：贴字幕 + 3 处叠化</div><div class="itemMeta">剪映 · 1080×1440</div></div><span class="itemTag">中</span></div>'+
+'<div class="item" data-id="t5"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">20:30 发牙膏图文，勾选蒲公英报备</div><div class="itemMeta">参数包已备好</div></div><span class="itemTag">轻</span></div>'+
+'<div class="item" data-id="t6"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">内衣视频按需发布，不与图文挤同一时段</div><div class="itemMeta">别两条挤同一时段</div></div><span class="itemTag">轻</span></div>'+
+'<div class="item" data-id="t7"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">发布 3 小时后看收藏和评论，回填数据</div><div class="itemMeta">只记三个数：收藏、点赞、评论</div></div><span class="itemTag">轻</span></div>'+
+'</div><div class="noteBar">点一下条目就算完成，状态存在这台设备上，换个模块再回来也不会丢。</div>'
+};
+
+MODULES.topics = {label:"今日选题库", html:
+'<div class="noteBar">每个选题都标了推荐形式，这是平台机制参考；选不选、发什么形式，你定。带货选题制作时必须补全「痛点钩子 + 留存节点 + 为什么在我这里买」。</div>'+
+'<div class="subHead">带货号 · 5 个</div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">01</div><div class="tTitle">孕中期胸胀，我是被疼醒的</div></div><div class="tWhy">已有样品（内衣），真实体感最强，适合今天视频主打。</div><div class="chips"><span class="chip on mini">短视频</span><span class="chip mini">孕中期胸胀</span><span class="chip mini">孕妇内衣怎么选</span><span class="chip mini">无钢圈内衣</span></div><div class="tPick"><button class="chip ghost" data-pick="a1">圆圈：今天做这个</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">02</div><div class="tTitle">孕期牙龈一刷就出血，我换了牙膏</div></div><div class="tWhy">已有样品（牙膏）。成分和选购是搜索型内容，图文更吃收藏。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕期牙龈出血</span><span class="chip mini">孕妇牙膏</span><span class="chip mini">刷牙想吐</span></div><div class="tPick"><button class="chip ghost" data-pick="a2">圆圈：今天做这个</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">03</div><div class="tTitle">孕中期下午就断电，我的补铁日常</div></div><div class="tWhy">已有样品（补铁饮）。图文讲怎么选，视频讲真实感受。</div><div class="chips"><span class="chip sage mini">图文 + 短视频</span><span class="chip mini">孕期补铁</span><span class="chip mini">孕中期疲惫</span><span class="chip mini">孕妇铁剂怎么选</span></div><div class="tPick"><button class="chip ghost" data-pick="a3">圆圈：今天做这个</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">04</div><div class="tTitle">双11 孕妈待产包，精简版清单</div></div><div class="tWhy">不需要样品，纯清单型，靠搜索和收藏吃长尾。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">待产包清单</span><span class="chip mini">孕妈囤货</span><span class="chip mini">双11母婴清单</span></div><div class="tPick"><button class="chip ghost" data-pick="a4">圆圈：今天做这个</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">05</div><div class="tTitle">8 岁大宝的秋冬刚需小件</div></div><div class="tWhy">儿童向，覆盖宝妈搜索，等你确认样品我再出方案。</div><div class="chips"><span class="chip sage mini">图文 + 短视频</span><span class="chip mini">小学生秋冬</span><span class="chip mini">儿童用品清单</span><span class="chip mini">宝妈省钱</span></div><div class="tPick"><button class="chip ghost" data-pick="a5">圆圈：今天做这个</button></div></div>'
+};
+
+var LEGACY_TRENDS_HTML =
+'<div class="noteBar">每条标题下前置对标笔记链接位；未收到链接标「待提供」，不编造。只发链接不带数据时，仅登记，不做复盘分析。拆解复用时必须补齐：痛点钩子 → 留存节点 → 真实购买理由 → 转化证据。</div>'+
+'<details class="dCard"><summary><span class="idx">01</span><span class="ttl">孕中期胸胀到睡不着，过来人真实办法<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">痛点开场</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>3 秒直给体感：不是矫情，是晚上真的疼醒。</div><div class="dRow"><span class="dK">封面</span>侧躺 + 大字痛点，素颜卧室自然光。</div><div class="dRow"><span class="dK">收藏</span>给 3 条可执行办法，收藏是为了以后照着做。</div><div class="dRow"><span class="dK">复用</span>怀孕之后才知道，原来__这么难受。</div><div class="dRow"><span class="dK">避雷</span>不暗示产品治好，只讲个人体感。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">02</span><span class="ttl">孕妈别乱买，这 5 样我全交过智商税<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">避坑清单</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>反向种草：先说别买什么。</div><div class="dRow"><span class="dK">封面</span>产品平铺 + 红字别买。</div><div class="dRow"><span class="dK">收藏</span>避坑清单天然高收藏，会转给孕妈群。</div><div class="dRow"><span class="dK">复用</span>每条坑配一句当时的心理，真实感来源。</div><div class="dRow"><span class="dK">避雷</span>不点名贬低具体品牌。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">03</span><span class="ttl">这件孕期小物，日均不到一块钱<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">算账</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>别听价格，算日均。</div><div class="dRow"><span class="dK">封面</span>价格对比 + 日均 0.8 元大字。</div><div class="dRow"><span class="dK">收藏</span>给决策依据，理性孕妈会存下来比价。</div><div class="dRow"><span class="dK">复用</span>日均成本 = 总价÷天数÷次数。</div><div class="dRow"><span class="dK">避雷</span>不虚标原价，不写全网最低。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">04</span><span class="ttl">孕妇内衣怎么选尺码，我总结了 3 个点<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">搜索型</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>标题即关键词，直接回答搜索问题。</div><div class="dRow"><span class="dK">封面</span>手写体尺码对照表截图。</div><div class="dRow"><span class="dK">收藏</span>工具型内容，买之前一定回来翻。</div><div class="dRow"><span class="dK">复用</span>下围、罩杯、孕周三段式。</div><div class="dRow"><span class="dK">避雷</span>不说人人适用，要写胸型差异。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">05</span><span class="ttl">托腹带正确戴法，戴错等于白戴<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">步骤演示</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>纠错型：大部分人第一步就错了。</div><div class="dRow"><span class="dK">封面</span>错误 / 正确并排。</div><div class="dRow"><span class="dK">收藏</span>步骤型内容，跟着做。</div><div class="dRow"><span class="dK">复用</span>分步骤字幕：躺下、托住、调松紧。</div><div class="dRow"><span class="dK">避雷</span>不宣称矫正胎位、治疗腰痛。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">06</span><span class="ttl">孕妇牙膏成分怎么看，我只看两行<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">知识增量</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>包装背面这两行最重要。</div><div class="dRow"><span class="dK">封面</span>成分表微距 + 红圈标注。</div><div class="dRow"><span class="dK">收藏</span>选购知识，长期有效。</div><div class="dRow"><span class="dK">复用</span>看成分不看广告语的框架。</div><div class="dRow"><span class="dK">避雷</span>不说消炎、治疗口臭。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">07</span><span class="ttl">三款孕妇内衣横向对比，我留了哪件<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">对比测评</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>对比 + 结论，省掉决策成本。</div><div class="dRow"><span class="dK">封面</span>三件平铺 + 打分表。</div><div class="dRow"><span class="dK">收藏</span>对比测评是收藏率最高的一类。</div><div class="dRow"><span class="dK">复用</span>缺点写 2 条更可信。</div><div class="dRow"><span class="dK">避雷</span>不拉踩，不写完爆、吊打。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">08</span><span class="ttl">自用满半个月，我才敢推荐这一件<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">时间背书</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>15 天之后再说话。</div><div class="dRow"><span class="dK">封面</span>日历打卡截图 + 产品实拍。</div><div class="dRow"><span class="dK">收藏</span>信任感，评论问链接的多。</div><div class="dRow"><span class="dK">复用</span>把使用天数写进标题。</div><div class="dRow"><span class="dK">避雷</span>天数必须真实。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">09</span><span class="ttl">精简待产包，产房真正用得上的<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">清单收藏</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>别照着网红清单囤一箱。</div><div class="dRow"><span class="dK">封面</span>清单卡片 + 只带这些。</div><div class="dRow"><span class="dK">收藏</span>孕晚期必存，收藏天花板。</div><div class="dRow"><span class="dK">复用</span>分产房 / 住院 / 回家三栏。</div><div class="dRow"><span class="dK">避雷</span>不制造焦虑。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">10</span><span class="ttl">孕中期最崩溃的一晚，我这样熬过来<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">情绪+方法</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>情绪真实，落点在解决办法。</div><div class="dRow"><span class="dK">封面</span>床头灯、低饱和、生活感。</div><div class="dRow"><span class="dK">收藏</span>同类孕妈共鸣 + 方法。</div><div class="dRow"><span class="dK">复用</span>情绪 30% + 方法 70%。</div><div class="dRow"><span class="dK">避雷</span>不病理化描述，不渲染恐怖感。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">11</span><span class="ttl">二胎孕妈才知道的省钱方式<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">身份差异</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>一胎交的学费，二胎不交了。</div><div class="dRow"><span class="dK">封面</span>素颜居家抱娃。</div><div class="dRow"><span class="dK">收藏</span>省钱干货，转发率高。</div><div class="dRow"><span class="dK">复用</span>一胎 / 二胎对比叙事。</div><div class="dRow"><span class="dK">避雷</span>不贬低新手妈妈。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">12</span><span class="ttl">孕妈问最多的 5 个问题，一次说清<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">问答</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>问答体，直接截评论区提问。</div><div class="dRow"><span class="dK">封面</span>五个问号 + 问题列表。</div><div class="dRow"><span class="dK">收藏</span>一次解决多个搜索需求。</div><div class="dRow"><span class="dK">复用</span>评论区就是下一个选题库。</div><div class="dRow"><span class="dK">避雷</span>医学问题一律建议就医。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">13</span><span class="ttl">孕中期侧睡怎么躺，腰才不酸<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">姿势演示</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>3 秒看到动作。</div><div class="dRow"><span class="dK">封面</span>床上侧躺 + 枕头位置标注。</div><div class="dRow"><span class="dK">收藏</span>动作型内容，晚上照做。</div><div class="dRow"><span class="dK">复用</span>枕头夹腿 + 垫腰两步法。</div><div class="dRow"><span class="dK">避雷</span>不做疗效承诺。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">14</span><span class="ttl">8 岁大宝秋冬刚需，我只看实用<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">儿童向</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>买过一圈，常用的就这几样。</div><div class="dRow"><span class="dK">封面</span>书桌 / 书包场景实拍。</div><div class="dRow"><span class="dK">收藏</span>学龄儿童清单，宝妈搜索稳定。</div><div class="dRow"><span class="dK">复用</span>常用 vs 闲置两栏。</div><div class="dRow"><span class="dK">避雷</span>不写护眼神器这类断言。</div></div></details>'+
+'<details class="dCard"><summary><span class="idx">15</span><span class="ttl">孕期这些真不用买，钱留着产检<span class="refLink">对标链接：待千瓜返回</span></span><span class="miniTag">反常识</span></summary><div class="dBody"><div class="dRow"><span class="dK">钩子</span>反常识，天然带讨论度。</div><div class="dRow"><span class="dK">封面</span>打叉的产品九宫格。</div><div class="dRow"><span class="dK">收藏</span>省钱型内容，收藏转发双高。</div><div class="dRow"><span class="dK">复用</span>不是东西不好，是我用不上。</div><div class="dRow"><span class="dK">避雷</span>不否定别人的消费选择。</div></div></details>';
+
+var IDEAS_DATE = "2026-11-14";
+var IDEAS = [
+  {title:"女儿蹲下来帮我系鞋带，说妈妈你肚子大了弯不下", why:"出门前鞋带松了，我正想踮脚够一下，她已经蹲下去了。小手系得歪歪扭扭的，我站着突然就有点鼻酸，她什么时候长这么大了", format:"图文", tags:["女儿","亲子日常","孕期"]},
+  {title:"孕21周起夜太频繁，一晚上要爬起来三四次", why:"刚睡着没多久就得起来，回来又得翻半天才能再睡着。第二天顶着黑眼圈送女儿上学，她还问我是不是昨晚没睡好", format:"图文", tags:["孕21周","起夜","孕期日常"]},
+  {title:"一个人去做产检，候诊区别人基本都是两个人", why:"排队的时候看见旁边孕妇老公帮她拎包递水，我低头玩手机假装不在意。其实也不是非得有人陪，就是偶尔会晃一下神", format:"图文", tags:["产检","一个人","孕期记录"]},
+  {title:"女儿趴在我肚子上，说听见妹妹在打嗝", why:"晚上她洗完澡跑过来趴在我肚子上听，听了一会儿很认真地说妈妈她在打嗝。其实那是我自己的肠鸣音，但我没拆穿她", format:"图文", tags:["女儿","二胎","亲子互动"]},
+  {title:"一胎的时候心大，二胎反而什么都想查清楚", why:"怀老大那会该吃吃该喝喝，火锅烧烤一顿没落下。现在这个不敢吃那个要查，朋友说我越生越胆小，可能是真的吧", format:"图文", tags:["二胎对比","孕期心态","真实记录"]},
+  {title:"周末带女儿逛公园，走了五百米就找椅子坐", why:"以前陪她跑遍整个公园都不嫌累，现在走几步肚子就发紧。她倒是懂事，说妈妈我们坐这儿我给你表演节目", format:"图文", tags:["孕期体力","亲子","周末"]},
+  {title:"记性差到离谱，早上出门忘带钥匙站门口半小时", why:"钥匙明明放玄关柜子上了，出门一关门才想起来。站门口等了半小时开锁师傅，女儿在旁边一直笑我糊涂", format:"图文", tags:["孕中期","记性差","日常"]},
+  {title:"女儿睡着以后，我摸着肚子跟老二说今天发生的事", why:"其实也知道他听不见，但就是想说说。跟他说姐姐今天考了一百分，说妈妈今天有点累，说着说着人就放松了", format:"图文", tags:["孕期情绪","二胎","夜晚"]},
+  {title:"腰越来越酸，晚上翻个身都得慢慢挪", why:"以前睡觉翻个身一秒的事，现在得先撑着腰，慢慢侧身，再把腿挪过去。有时候半夜醒了就这么僵着，怕吵醒女儿", format:"图文", tags:["孕中期","腰酸","睡眠"]},
+  {title:"托腹带用了两周，说点真实感受不吹不黑", why:"肚子大了以后走路往下坠，看很多人推荐就买了。用了两周，说下到底值不值得入，哪些人真的需要", format:"图文", tags:["孕期好物","托腹带","自用实测"]},
+  {title:"孕妇枕挑了好久，这个侧躺不压肚子我留了", why:"买过两个便宜的，一个塌了一个有味道。这个用了快一个月，中间那块托肚子的设计确实舒服，说说优缺点", format:"图文", tags:["孕期好物","孕妇枕","自用实测"]},
+  {title:"孕期刷牙总出血，换了这支软毛牙刷才不刷一嘴血", why:"以前用普通牙刷每次都见红，以为是上火。后来换了超软毛的，刷了一周基本不出血了。牙龈敏感的孕妈真的可以试试", format:"图文", tags:["孕期好物","软毛牙刷","自用实测"]}
+];
+function ideaCard(t){
+  t=t||{};
+  var tags=(t.tags||[]).map(function(x){return '<span class="chip mini">'+esc(x)+'</span>';}).join('');
+  var fmt=t.format||'';
+  var fmtHtml=fmt?('<span class="chip '+(fmt.indexOf('视频')>=0?'sage ':'')+'mini">'+esc(fmt)+'</span>'):'';
+  return '<article class="tCard"><div class="tTop"><div class="tTitle">'+esc(t.title||'')+'</div>'+fmtHtml+'</div><div class="tWhy">'+esc(t.why||'')+'</div><div class="chips">'+tags+'</div></article>';
+}
+var TRENDS = [
+  {
+    title: "二宝孕中期了，可以运动吗🤯",
+    heat: "4998热度",
+    heatNum: 4998,
+    share_url: "https://www.xiaohongshu.com/explore/6953b24f000000001f005e8f",
+    noteId: "6953b24f000000001f005e8f",
+    collectedFrom: "2026-11-12",
+    logic: "高赞爆款：标题有情绪落点，收藏/评赞比如果高则是搜索款"
+  },
+  {
+    title: "双胎26周 怀孕了也要好好打扮自己~",
+    heat: "1385热度",
+    heatNum: 1385,
+    share_url: "https://www.xiaohongshu.com/explore/6aa97d2b0000000026021bc1",
+    noteId: "6aa97d2b0000000026021bc1",
+    collectedFrom: "2026-11-12",
+    logic: "高赞爆款：标题有情绪落点，收藏/评赞比如果高则是搜索款"
+  },
+  {
+    title: "孕中期一定不要错过的事",
+    heat: "1313热度",
+    heatNum: 1313,
+    share_url: "https://www.xiaohongshu.com/explore/6aae05610000000029019697",
+    noteId: "6aae05610000000029019697",
+    collectedFrom: "2026-11-12",
+    logic: "高赞爆款：标题有情绪落点，收藏/评赞比如果高则是搜索款"
+  },
+  {
+    title: "熬到孕中期了，每周要小心的事🔥",
+    heat: "766热度",
+    heatNum: 766,
+    share_url: "https://www.xiaohongshu.com/explore/6a4a17c8000000001603f061",
+    noteId: "6a4a17c8000000001603f061",
+    collectedFrom: "2026-11-12",
+    logic: "中赞潜力：看评论是否有共鸣类内容，模仿表达方式"
+  },
+  {
+    title: "孕24周，已涨7kg，但状态没输",
+    heat: "362热度",
+    heatNum: 362,
+    share_url: "https://www.xiaohongshu.com/explore/6a148c2200000000080302fa",
+    noteId: "6a148c2200000000080302fa",
+    collectedFrom: "2026-11-12",
+    logic: "中赞潜力：看评论是否有共鸣类内容，模仿表达方式"
+  },
+  {
+    title: "孕中期湿疹-已治疗好经验分享",
+    heat: "231热度",
+    heatNum: 231,
+    share_url: "https://www.xiaohongshu.com/explore/6ac308c50000000002013cd3",
+    noteId: "6ac308c50000000002013cd3",
+    collectedFrom: "2026-11-12",
+    logic: "基础数据：先看封面标题再判断是否有参考价值"
+  },
+  {
+    title: "plog｜孕20周✨孕期进度过半🎊",
+    heat: "164热度",
+    heatNum: 164,
+    share_url: "https://www.xiaohongshu.com/explore/6a82c9ff000000000600424a",
+    noteId: "6a82c9ff000000000600424a",
+    collectedFrom: "2026-11-12",
+    logic: "基础数据：先看封面标题再判断是否有参考价值"
+  },
+  {
+    title: "孕妈爆款话题｜快抄👍",
+    heat: "67热度",
+    heatNum: 67,
+    share_url: "https://www.xiaohongshu.com/explore/6adfd61f0000000026037859",
+    noteId: "6adfd61f0000000026037859",
+    collectedFrom: "2026-11-12",
+    logic: "基础数据：先看封面标题再判断是否有参考价值"
+  },
+  {
+    title: "纯属好奇……",
+    heat: "29热度",
+    heatNum: 29,
+    share_url: "https://www.xiaohongshu.com/explore/6ad19140000000001b033f29",
+    noteId: "6ad19140000000001b033f29",
+    collectedFrom: "2026-11-12",
+    logic: "基础数据：先看封面标题再判断是否有参考价值"
+  },
+  {
+    title: "沉浸式当妈妈的一天💗",
+    heat: "28热度",
+    heatNum: 28,
+    share_url: "https://www.xiaohongshu.com/explore/6a24108f000000003502cc8a",
+    noteId: "6a24108f000000003502cc8a",
+    collectedFrom: "2026-11-12",
+    logic: "基础数据：先看封面标题再判断是否有参考价值"
+  },
+  {
+    title: "孕18周➕2，舒适的孕中期～",
+    heat: "28热度",
+    heatNum: 28,
+    share_url: "https://www.xiaohongshu.com/explore/6aace2ae000000002601d9ad",
+    noteId: "6aace2ae000000002601d9ad",
+    collectedFrom: "2026-11-12",
+    logic: "基础数据：先看封面标题再判断是否有参考价值"
+  }
+];
+function esc(v){ return String(v===undefined||v===null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function safeShareUrl(v){
+  try{ var u=new URL(String(v||'')); var h=u.hostname; var ok=u.protocol==='https:'&&(h==='xhslink.com'||h.endsWith('.xhslink.com')||h==='www.xiaohongshu.com'||h==='xiaohongshu.com'); return ok&&u.pathname.length>1 ? u.href : ''; }
+  catch(e){ return ''; }
+}
+function trendCard(t){
+  t=t||{};
+  var url=safeShareUrl(t.share_url);
+  var linkHtml=url
+    ? '<div class="trendLinkRow"><div class="trendUrl"><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(url)+'</a></div><button class="chip copy mini" data-copy-text="'+esc(url)+'">复制短链</button></div>'
+    : '<div class="trendLinkRow"><div class="trendUrl">短链接：待录入（xhslink.com）</div><button class="chip ghost mini" disabled>待录入</button></div>';
+  var previewHtml='<div class="trendPreview'+(url?'':' isEmpty')+'"><iframe src="'+esc(url||'about:blank')+'" title="'+esc(t.title||'对标笔记预览')+'" loading="lazy" referrerpolicy="no-referrer" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups" allowfullscreen></iframe>'+(url?'':'<div class="previewEmpty">录入短链后<br>在这里直接预览笔记</div>')+'</div><div class="previewNote">小红书禁止外部网页内嵌，预览区空白属正常，点上方链接查看原笔记</div>';
+  return '<article class="trendCard">'+linkHtml+previewHtml+
+    '<div class="trendHeat"><span class="dK">热度数据</span>'+esc(t.heat||'待录入')+'</div>'+
+    '<div class="trendLogic"><div class="trendTitle">'+esc(t.title||'孕产母婴对标笔记')+'</div><div class="trendLogicText">'+esc(t.logic||'录入笔记后，再拆痛点钩子、留存节奏与购买理由。').replace(/\n/g,'<br>')+'</div></div></article>';
+}
+MODULES.teardown = {label:"爆款灵感库", html:
+  '<div class="noteBar">以下为 <b>AI 根据孕产赛道爆款结构与搜索需求每日生成</b>的选题建议，<b>不是真实笔记数据、不含虚构热度</b>，每天 6:00 自动更新。</div>'+
+  '<div class="subHead">AI 今日选题灵感 · '+esc(IDEAS_DATE)+'</div>'+
+  (IDEAS.length ? IDEAS.map(ideaCard).join('') : '<div class="noteBar">今天的选题还没生成，6:00 会自动更新。</div>')+
+  '<div class="subHead">历史真实对标笔记 · 2026-11-12 采集（仅参考，不再自动更新）</div>'+
+  (TRENDS.length ? TRENDS.map(trendCard).join('') : '')+
+  '<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M8 7h11M8 12h11M8 17h7"/><path d="M4 7h.01M4 12h.01M4 17h.01"/></svg></span><span class="cardTitle">发我这段就够了</span><span class="cardHint">点复制</span></div><div class="cardText" style="margin-bottom:10px">短链：https://xhslink.com/xxxxx<br>标题：（可省略）<br>点赞： 收藏： 评论：<br>备注：（这条为什么吸引你，可省略）</div><button class="chip copy" data-copy-text="短链：https://xhslink.com/&#10;标题：&#10;点赞： 收藏： 评论：&#10;备注：">复制录入模板</button></div>'+
+  '<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg></span><span class="cardTitle">投喂箱</span><span class="cardHint">粘贴 → 保存 → 发我</span></div><div class="cardText" style="margin-bottom:10px">看到好的笔记，把链接和数据粘进来，点保存就存在这台设备上，下次打开还在。攒好了点「复制去对话」，把整箱贴到我们聊天里发我，我按链接 → 热度 → 拆解的顺序给你。</div><textarea class="feedBox" id="feedBox" placeholder="短链：&#10;标题：&#10;点赞： 收藏： 评论：&#10;我觉得好在："></textarea><div class="chips" style="margin-top:10px"><button class="chip ghost" id="feedSave">保存</button><button class="chip on" id="feedGo">复制去对话</button><button class="chip ghost" id="feedClear">清空</button></div><div class="feedTip" id="feedTip">这个箱子不会自己联网，也不会自动拆解；拆解要把它发到聊天里。</div></div>'+
+  '<div class="subHead">创作拆解框架 · 非实时笔记</div>'+LEGACY_TRENDS_HTML
+};
+
+MODULES.content = {label:"内容产出区", html:
+'<div class="noteBar">今天建议 1 套图文；内衣视频是备选，不要求同日发布。所有内容以爆款为目标，但不承诺结果；不臆测平台未公开权重，只按真实数据迭代。</div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 16v-5M12 16v-8M17 16v-3"/></svg></span><span class="cardTitle">每条笔记的爆款检查</span><span class="cardHint">发布前逐项过</span></div><div class="cardText"><b>01 痛点留人</b>：首图或首句直接点明谁的什么难受，立刻给出看完能得到什么。<br><b>02 提升看完率</b>：删掉问候与重复铺垫；视频每 3-8 秒给新信息，图文每图推进一个新点。<br><b>03 为什么在我这里买</b>：真实自用 + 筛选标准 + 实测细节 + 优缺点 + 适合/不适合谁，不靠催单。<br><b>04 按推流信号复盘</b>：点击低改封面标题，留存低改开头节奏，收藏低补实用信息，商品点击低补购买理由。</div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12h8M8 8h8M8 16h5"/></svg></span><span class="cardTitle">方案 A · 图文｜牙龈敏感</span><span class="cardHint">今晚 20:30</span></div>'+
+'<div class="chips" style="margin-bottom:4px"><span class="chip mini">3:4 · 1080×1440</span><span class="chip mini">6 张图</span><span class="chip mini">挂牙膏</span></div>'+
+'<div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="cover">复制封面</button><button class="chip copy" data-copy="body">复制正文</button><button class="chip copy" data-copy="tags">复制标签</button></div>'+
+'<pre class="doc">'+COPY.cover.replace(/\n/g,'<br>')+'</pre>'+
+'<div class="cardText" style="margin-top:10px">配图：封面 · 刷牙场景 · 成分微距 · 挤膏细节 · 台面收纳 · 适合人群总结卡<br>时间 20:30-22:00 / 首图封面 / 位置关闭 / 勾选蒲公英报备<br><span class="chip sage mini" style="margin-top:8px;display:inline-block">预审通过</span></div></div>'+
+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/></svg></span><span class="cardTitle">方案 B · 短视频｜内衣</span><span class="cardHint">3:4 · 45 秒</span></div>'+
+'<div class="chips" style="margin-bottom:4px"><span class="chip mini">1080×1440</span><span class="chip mini">原声自然口语</span><span class="chip mini">不加美颜</span></div>'+
+'<div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="script">复制口播</button><button class="chip copy" data-copy="jy">复制剪映指令包</button></div>'+
+'<ul class="tl"><li><span class="tm">0-3s</span><span>侧躺按胸口：翻身先疼醒，直接点痛点</span></li><li><span class="tm">3-7s</span><span>结果预告：弹力、承托、缺点一次说清</span></li><li><span class="tm">7-15s</span><span>站立、抬手、弯腰，验证肩带和下围</span></li><li><span class="tm">15-23s</span><span>下围弹力特写，给出实测证据</span></li><li><span class="tm">23-30s</span><span>杯型细节，主动讲偏软与承托边界</span></li><li><span class="tm">30-39s</span><span>多场景上身，回答为什么在我这里选</span></li><li><span class="tm">39-45s</span><span>对照尺码和面料，适合再买</span></li></ul>'+
+'<pre class="doc">'+COPY.jy.replace(/\n/g,'<br>')+'</pre>'+
+'<div class="cardText" style="margin-top:10px">首帧封面：侧躺痛点画面 + 大字「孕中期晚上被疼醒」，右下小字「二胎孕妈自用」<br><span class="chip sage mini" style="margin-top:8px;display:inline-block">预审通过</span></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5"/></svg></span><span class="cardTitle">两条统一提醒</span></div><div class="cardText">挂商品卡片要勾选蒲公英报备；两篇结尾都保留「体质不同、按自己情况选」。</div></div>'
+};
+
+MODULES.pool = {label:"选品赛马池", html:
+'<div class="noteBar">这里只陈列候选，不设主推。你圈哪一个，我第二天只围绕它加密产出。</div>'+
+'<div class="subHead">已有样品 · 3 件</div>'+
+'<div class="card">'+
+'<div class="poolRow"><div class="poolName">雅撒梅孕妇内衣<div class="poolForm">上身 / 弹力 / 承托，视频最能出效果</div></div><span class="chip sage mini">短视频</span></div>'+
+'<div class="poolRow"><div class="poolName">优牙孕妇牙膏<div class="poolForm">成分、对比、口腔痛点，图文吃搜索</div></div><span class="chip mini">图文</span></div>'+
+'<div class="poolRow"><div class="poolName">补铁饮<div class="poolForm">怎么选 + 真实感受，双形式都成立</div></div><span class="chip sage mini">双发</span></div>'+
+'</div>'+
+'<div class="subHead">建议采购 · 按性价比排序</div>'+
+'<div class="card">'+
+'<div class="poolRow"><div class="poolName">托腹带<div class="poolForm">腰酸痛点强，穿戴步骤适合视频</div></div><span class="chip ghost mini">建议采购</span></div>'+
+'<div class="poolRow"><div class="poolName">孕妇枕 / 侧睡枕<div class="poolForm">睡眠痛点，使用演示类视频</div></div><span class="chip ghost mini">建议采购</span></div>'+
+'<div class="poolRow"><div class="poolName">月子服（透气天竹面料）<div class="poolForm">近期热词，图文 + 短视频都能做</div></div><span class="chip ghost mini">建议采购</span></div>'+
+'<div class="poolRow"><div class="poolName">8 岁大宝秋冬小件<div class="poolForm">覆盖宝妈搜索，等你定具体品</div></div><span class="chip ghost mini">待定</span></div>'+
+'</div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h13"/></svg></span><span class="cardTitle">形式判断标准</span></div><div class="cardText">要看得见动作、上身、手感的，走短视频；要对比、成分、尺码、清单、算账的，走图文；单价不高又能演示又能列清单的，双发。</div></div>'
+};
+
+MODULES.review = {label:"数据复盘 & 风控提醒", html:
+'<div class="metric"><div class="mCell"><div class="mL">昨日收藏</div><div class="mV dim">暂无</div></div><div class="mCell"><div class="mL">昨日成交</div><div class="mV dim">暂无</div></div><div class="mCell"><div class="mL">投流消耗</div><div class="mV dim">暂无</div></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span class="cardTitle">笔记链接与复盘</span><span class="cardHint">链接登记：暂无</span></div><div class="cardText">只发链接：仅登记，标「待补数据」，不做复盘分析。<br>链接 + 流量/成交数据：登记后再复盘内容、品效和投流。</div><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="noteData">复制笔记数据模板</button></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span><span class="cardTitle">品效分析 · 橱窗</span><span class="cardHint">待橱窗销售数据</span></div><div class="chips"><span class="chip plain mini">追品：待数据</span><span class="chip plain mini">减品：待数据</span><span class="chip plain mini">上新：待数据</span></div><div class="cardText" style="margin-top:10px">点击转化率 = 成交订单 ÷ 商品点击人数；千次阅读成交额 = 成交金额 ÷ 阅读 × 1000。<br><br><b>追品</b>：点击、转化、佣金持续优于中位且退款正常，再增加同痛点内容。<br><b>减品</b>：连续 2 个周期高曝光低点击、高点击低成交，或退款/差评异常，再降低排期。<br><b>上新</b>：搜索与评论痛点明确，并通过自用、安全、合规、性价比门槛。<br><br>单日波动不直接下结论，最终由你决定。</div><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="salesData">复制橱窗 + 投流模板</button></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 16v-5M12 16v-8M17 16v-3"/><path d="M15 5l4 2"/></svg></span><span class="cardTitle">薯条 · 聚光投流</span><span class="cardHint">今日：无数据不投</span></div><div class="chips"><span class="chip plain mini">成交 ROI：待算</span><span class="chip plain mini">佣金 ROI：待算</span><span class="chip plain mini">保本投产：待算</span></div><div class="cardText" style="margin-top:10px">成交 ROI = 归因成交金额 ÷ 消耗<br>佣金 ROI = 退款后实际佣金 ÷ 消耗<br>保本成交 ROI = 1 ÷ 实际佣金率；保本佣金 ROI = 1<br><br><b>投流与否</b>：无自然流量和成交归因时不盲投。<br><b>投放笔记</b>：薯条测阅读、互动、收藏；聚光放已验证的商品点击和成交，不把高点赞等同于高转化。<br><b>预算</b>：单笔 CPA 上限 = 单笔退款后佣金；测试预算 = 目标订单数 × CPA 上限，待数据后计算。<br><b>定向</b>：平台合规的孕产母婴兴趣、孕期/待产关键词、内容互动人群，先窄后宽。<br><b>停投</b>：达测试预算无转化、CPA 超上限、佣金 ROI 低于保本且无改善，或退款/舆情异常。</div><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="salesData">复制投流数据模板</button></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 16v-5M12 16v-8M17 16v-3"/></svg></span><span class="cardTitle">数据状态</span><span class="cardHint">基线从今晚起</span></div><div class="cardText">今天是启动日，还没有已发布笔记。以后每天回填笔记、橱窗和投流数据；只有链接没有数据时，仅登记不分析。<br><br><b>按信号改内容</b>：封面点击低先改标题首图；前段流失先改痛点与结果预告；完播低删重复和空镜；收藏低补可保存信息；商品点击低补购买理由。高点击低成交先核对商品页、价格、规格与评价，不凭空归因。</div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="cardTitle">风控自检</span><span class="cardHint"><b data-risk>0</b> / 7</span></div>'+
+'<div class="item" data-risk-id="r1"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">没有「最、第一、100%、必须买、不买后悔」</div></div></div>'+
+'<div class="item" data-risk-id="r2"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">没有暗示治疗、改善某种疾病</div></div></div>'+
+'<div class="item" data-risk-id="r3"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">没有引导去微信、抖音、私信下单</div></div></div>'+
+'<div class="item" data-risk-id="r4"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">没有贬低或对比其他品牌</div></div></div>'+
+'<div class="item" data-risk-id="r5"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">使用天数、效果描述都真实</div></div></div>'+
+'<div class="item" data-risk-id="r6"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">带货内容没混进个人生活话题</div></div></div>'+
+'<div class="item" data-risk-id="r7"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">挂商品卡片已勾选蒲公英报备</div></div></div>'+
+'</div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></span><span class="cardTitle">今日预审结论</span></div><div class="cardText">图文与视频两套均未出现极限词、医疗断言、站外导流，<span class="chip sage mini">预审通过</span><br><br>发布权只在你手上，工作台不代发。</div></div>'
+};
+
+var MODULES_IP = {};
+
+MODULES_IP.overview = {label:"今日概况", html:
+'<div class="hero"><div class="heroRow"><div><div class="heroTitle">今日 IP 号打卡</div></div><div class="heroDate" data-d3></div></div>'+
+'<div class="barTrack"><div class="barFill" data-bar></div></div>'+
+'<div class="heroFoot"><span>孕21周 · 图文为主 · 先立人设</span><span>已完成 <b data-done>0</b> / 7 项</span></div></div>'+
+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 16v-5M12 16v-8M17 16v-3"/></svg></span><span class="cardTitle">起号方案 · 前 30 天</span><span class="cardHint">图文为主</span></div>'+
+'<div class="cardText"><b>一句话人设</b>：孕21周二胎孕妈，记录孕期每天在干嘛、吃什么、怎么过。<br><b>目标人群</b>：同孕周、想有人陪着把孕期过明白的孕妈。<br><b>她要的关注理由</b>：看得到我真实的一天、真实的取舍，能对照自己。<br><br><b>内容形态</b>：图文为主，约 8 成图文 2 成视频；只有需要动作演示的才拍视频。<br><br><b>0-7 天 · 立人设</b>：发 3 条图文，隔天更。让人知道我是谁、孕几周、在过什么日子。<br><b>8-20 天 · 跑方向</b>：发 4-5 条图文，日常人设为主，按收藏和评论挑 2 个方向深挖。<br><b>21-30 天 · 稳输出</b>：发 3-4 条，人设不变，把评论区问得最多的那件事讲透。<br><br><b>变现方式</b>：不带货、不挂商品、不挂链接；以品牌广告合作为主，广告走蒲公英报备。起号前 30 天不接任何商业，先把人立住。<br><b>发布节奏</b>：不日更。前 30 天 10-12 条，一周 2-3 条，优先 20:30-21:30。<br><b>涨粉动作</b>：每条结尾抛一个具体问题；发后 1 小时蹲评论追问细节；主页一句话写清你写什么。</div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 16v-5M12 16v-8M17 16v-3"/></svg></span><span class="cardTitle">为什么这么定 · 真实数据</span><span class="cardHint">11-11 采集</span></div>'+
+'<div class="cardText">孕晚期内心独白：953 赞 / 323 评，评论超过收藏 → 情绪类靠评论推流，所以每条必须留问题。<br>自嘲型“小哭包”：229 赞 / 123 评 → 自嘲比控诉安全，共鸣不减。<br>“不是我矫情”：425 赞但冲突强 → 句式可用，正文必须收在“我怎么处理”。<br>“孕中期为什么特别小心”：仅 106 赞 → 泛问题没人看，痛点必须落到周数和身体部位。</div></div>'+
+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span><span class="cardTitle">今天要埋的搜索词</span><span class="cardHint">不超过 6 个</span></div>'+
+'<div class="chips"><span class="chip plain">孕中期情绪</span><span class="chip plain">孕期焦虑</span><span class="chip plain">怀孕后才知道</span><span class="chip plain">孕妈崩溃瞬间</span><span class="chip plain">二胎孕期</span></div></div>'+
+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="cardTitle">这个号的边界</span><span class="cardHint">发布前看一眼</span></div>'+
+'<div class="chips"><span class="chip ghost">不带货</span><span class="chip ghost">不挂商品</span><span class="chip ghost">广告走蒲公英报备</span><span class="chip ghost">不卖惨</span><span class="chip ghost">不控诉</span></div></div>'
+};
+
+MODULES_IP.todos = {label:"今日待办", html:
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg></span><span class="cardTitle">今日待办</span><span class="cardHint"><b data-done>0</b> / 7 已完成</span></div>'+
+'<div class="item" data-id="t1"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">从选题里圈定 1 个，只做这一个</div><div class="itemMeta">不贪多 · 一条讲透</div></div><span class="itemTag">轻</span></div>'+
+'<div class="item" data-id="t2"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">写 9 张图的文案，第一句就抛痛点</div><div class="itemMeta">不要铺垫 · 不要自我介绍</div></div><span class="itemTag">中</span></div>'+
+'<div class="item" data-id="t3"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">封面一句实话，大字压满屏</div><div class="itemMeta">素颜 · 原相机 · 不精修</div></div><span class="itemTag">轻</span></div>'+
+'<div class="item" data-id="t4"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">内页每张一句，不超过 15 字</div><div class="itemMeta">3:4 竖版 · 1080×1440</div></div><span class="itemTag">中</span></div>'+
+'<div class="item" data-id="t5"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">20:30 发布，全程不带货</div><div class="itemMeta">不挂商品 · 广告才报备</div></div><span class="itemTag">轻</span></div>'+
+'<div class="item" data-id="t6"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">发后守 1 小时评论，逐条真诚回</div><div class="itemMeta">评论决定这条能推多远</div></div><span class="itemTag">轻</span></div>'+
+'<div class="item" data-id="t7"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">把评论里重复出现的痛记进台账</div><div class="itemMeta">这是下一条选题的来源</div></div><span class="itemTag">轻</span></div>'+
+'</div><div class="noteBar">IP 号的待办和带货号分开存，互不影响。点一下就算完成。</div>'
+};
+
+MODULES_IP.topics = {label:"今日选题库", html:
+'<div class="noteBar">起号前 30 天做这 13 条，图文为主，只有需要动作演示的才拍视频。按顺序发，不临时加。</div>'+
+'<div class="subHead">孕妈日常人设 · 3 条（先让人认识你）</div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">D1</div><div class="tTitle">孕21周，我的一天是怎么过的</div></div><div class="tWhy">人设第一条就发这个。早中晚时间线，9 张图讲完一天，让人知道你是谁、在过什么日子。</div><div class="chips"><span class="chip on mini">图文</span><span class="chip mini">孕中期日常</span><span class="chip mini">二胎孕期</span></div><div class="tPick"><button class="chip ghost" data-pick="i1">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">D2</div><div class="tTitle">二胎孕期，我每天在吃什么</div></div><div class="tWhy">三餐加餐实拍，只记录不评判，不写功效、不说该吃什么。真实感最强。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕期饮食</span><span class="chip mini">孕妈日常</span></div><div class="tPick"><button class="chip ghost" data-pick="i2">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">D3</div><div class="tTitle">孕中期我给自己定的三条规矩</div></div><div class="tWhy">立场型人设，容易被收藏。讲取舍，不讲谁对谁错。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕妈边界</span><span class="chip mini">孕期心态</span></div><div class="tPick"><button class="chip ghost" data-pick="i3">圈：这条先做</button></div></div>'+
+'<div class="subHead">情绪共鸣 · 5 条（互动主力）</div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">E1</div><div class="tTitle">孕中期最难受的，不是身体</div></div><div class="tWhy">共鸣最强：难受被当成矫情。对标独白类笔记 953 赞 / 323 评。</div><div class="chips"><span class="chip on mini">图文</span><span class="chip mini">孕中期情绪</span><span class="chip mini">没人当回事</span></div><div class="tPick"><button class="chip ghost" data-pick="i4">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">E2</div><div class="tTitle">怀孕后最怕听到的一句话</div></div><div class="tWhy">“你想太多了”几乎人人中枪，引用式标题冲突感强但可控。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕期焦虑</span><span class="chip mini">不被理解</span></div><div class="tPick"><button class="chip ghost" data-pick="i5">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">E3</div><div class="tTitle">孕检一个人去的那天</div></div><div class="tWhy">场景具体、情绪克制，不控诉谁，只讲当时状态。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕检</span><span class="chip mini">一个人</span></div><div class="tPick"><button class="chip ghost" data-pick="i6">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">E4</div><div class="tTitle">怀孕后，我变成了动不动就掉眼泪的人</div></div><div class="tWhy">自嘲代替控诉，攻击性低。对标小哭包 229 赞 / 123 评。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕期情绪</span><span class="chip mini">孕妈心理</span></div><div class="tPick"><button class="chip ghost" data-pick="i7">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">E5</div><div class="tTitle">孕期崩溃，往往因为一件小事</div></div><div class="tWhy">以小见大，适合图文长叙述，收藏和转发都高。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕妈共鸣</span><span class="chip mini">怀孕后才知道</span></div><div class="tPick"><button class="chip ghost" data-pick="i8">圈：这条先做</button></div></div>'+
+'<div class="subHead">身体感受 · 3 条（吃搜索长尾）</div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">B1</div><div class="tTitle">半夜抽筋疼醒，我学会了不叫人</div></div><div class="tWhy">具体到时间、部位、动作，搜索词明确，容易被搜到。</div><div class="chips"><span class="chip on mini">图文</span><span class="chip mini">孕期抽筋</span><span class="chip mini">孕中期睡眠</span></div><div class="tPick"><button class="chip ghost" data-pick="i9">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">B2</div><div class="tTitle">孕中期体力断崖，是真的</div></div><div class="tWhy">身体感受向，真实、有区分度，不涉及任何产品。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕中期体力</span><span class="chip mini">二胎孕期</span></div><div class="tPick"><button class="chip ghost" data-pick="i10">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">B3</div><div class="tTitle">孕24周以后，我的腰开始不认识我</div></div><div class="tWhy">落到具体周数，避开“孕中期为什么特别小心”那种泛问题。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕期腰痛</span><span class="chip mini">孕中期</span></div><div class="tPick"><button class="chip ghost" data-pick="i11">圈：这条先做</button></div></div>'+
+'<div class="subHead">关系边界 · 2 条（有立场，但不控诉）</div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">R1</div><div class="tTitle">我不是矫情，我只是没力气解释了</div></div><div class="tWhy">借用高冲突句式，但落点是“我不解释了”，不指向具体的人。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">被说矫情</span><span class="chip mini">孕期情绪</span></div><div class="tPick"><button class="chip ghost" data-pick="i12">圈：这条先做</button></div></div>'+
+'<div class="tCard"><div class="tTop"><div class="tNo">R2</div><div class="tTitle">怀孕后，我不再解释的三件事</div></div><div class="tWhy">清单式表达，立场清楚，容易收藏和讨论。</div><div class="chips"><span class="chip mini">图文</span><span class="chip mini">孕妈边界</span><span class="chip mini">孕期成长</span></div><div class="tPick"><button class="chip ghost" data-pick="i13">圈：这条先做</button></div></div>'+
+'<div class="noteBar" style="margin-top:12px">写的时候只讲「我经历了什么、我当时怎么想」，不讲「谁对不起我」。不卖惨，也不替任何人定罪。</div>'
+};
+
+MODULES_IP.content = {label:"内容产出区", html:
+'<div class="noteBar">IP 号不日更。这周只做 E1 这一条，6 张图，分两次拍完就够；先把人立住，不带货、不挂商品，有稳定互动后以品牌广告合作为主，广告走蒲公英报备。</div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 16v-5M12 16v-8M17 16v-3"/></svg></span><span class="cardTitle">每条笔记的爆款检查</span><span class="cardHint">IP 号版</span></div><div class="cardText"><b>01 痛点留人</b>：第一句就是具体场景，不铺垫、不自我介绍。<br><b>02 看完率</b>：每 3-8 秒给一个新细节，删掉重复情绪词。<br><b>03 为什么关注我</b>：你说出了别人说不出的话，且不夸张、不表演。<br><b>04 安全边界</b>：不卖惨、不控诉、不涉医疗判断；不带货、不挂商品，接广告必须蒲公英报备。</div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18"/><path d="M11 14l4 2-4 2z"/></svg></span><span class="cardTitle">%s</span><span class="cardHint">%s</span></div><pre class="doc">%s</pre><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="%s">%s</button></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span class="cardTitle">E1 · 封面文案</span><span class="cardHint">3:4 竖版</span></div><div class="cardText"><b>主文案</b>：孕中期最难受的，不是身体<br><b>副文案</b>：是没人信你真的难受<br><br><b>备选 1</b>：孕21周，我学会不解释了<br><b>备选 2</b>：不是身体难受，是没人当回事<br><b>备选 3</b>：怀孕后最累的，是解释自己<br><br><b>视觉</b>：素颜坐床边或侧躺，手放腰或肚子上，窗边自然光，不磨皮、不摆拍。<br><b>排版</b>：主文案压上 1/3，最多两行，每行不超过 12 字，白字加深色描边。<br><b>发布标题</b>：孕中期最难受的，不是身体<br><b>话题</b>：#孕中期 #孕期情绪 #怀孕后才知道 #孕妈日常 #二胎孕期<br><b>置顶评论</b>：我先说：21周，腰。你呢？</div><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="ipCover">复制封面与发布信息</button></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="12" cy="12" r="3.2"/></svg></span><span class="cardTitle">%s</span><span class="cardHint">%s</span></div><pre class="doc">%s</pre><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="%s">%s</button></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span class="cardTitle">备选 · E2 图文</span><span class="cardHint">明天再用</span></div><pre class="doc">P1 封面：怀孕后最怕听到的一句话\nP2 正文：不是"你要当妈了"，是"你想太多了"\nP3 具体场景：半夜抽筋，我说疼，他说忍忍\nP4 我的反应：我没吵，我只是记住了这件事\nP5 后来的改变：我开始自己记录身体，不等人问\nP6 收尾：如果你也被这样说过，你不是矫情</pre><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="ipBody">复制图文文案</button></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"/></svg></span><span class="cardTitle">%s</span><span class="cardHint">%s</span></div><pre class="doc">%s</pre><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="%s">%s</button></div></div>'
+};
+
+MODULES_IP.pool = {label:"内容方向池", html:
+'<div class="noteBar">不带货，不选品。这里只陈列内容方向，你圈哪个，我就往哪个方向多写；接广告也只接和这个方向一致的品牌。</div>'+
+'<div class="poolRow"><div class="dot">✓</div><div class="poolName">孕妈日常<div class="poolForm">一天怎么过、吃什么、在家干嘛。人设底盘，先把「我是谁」立住。</div></div></div>'+
+'<div class="poolRow"><div class="dot">✓</div><div class="poolName">身体感受<div class="poolForm">抽筋、失眠、腰痛、喘不上气、体力断崖。越具体越有人对号入座。</div></div></div>'+
+'<div class="poolRow"><div class="dot">✓</div><div class="poolName">情绪共鸣<div class="poolForm">崩溃、焦虑、莫名想哭、怕自己当不好妈。只讲感受，不追究谁对谁错。</div></div></div>'+
+'<div class="poolRow"><div class="dot">✓</div><div class="poolName">关系边界<div class="poolForm">被说矫情、被比较、被安排。讲自己怎么处理，不控诉具体的人。</div></div></div>'+
+'<div class="poolRow"><div class="dot">✓</div><div class="poolName">自我照顾<div class="poolForm">孕期怎么让自己舒服一点。方法向、低门槛、不涉及产品推荐。</div></div></div>'+
+'<div class="poolRow"><div class="dot">✓</div><div class="poolName">二胎视角<div class="poolForm">两次怀孕的差别、体力和心态的变化。这次孕中期分开，一个人带8岁女儿，只讲自己的经历和感受。</div></div></div>'
+};
+
+MODULES_IP.review = {label:"数据复盘 & 风控提醒", html:
+'<div class="metric"><div class="mCell"><div class="mL">昨日涨粉</div><div class="mV dim">暂无</div></div><div class="mCell"><div class="mL">昨日收藏</div><div class="mV dim">暂无</div></div><div class="mCell"><div class="mL">昨日评论</div><div class="mV dim">暂无</div></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span class="cardTitle">笔记链接与复盘</span><span class="cardHint">链接登记：暂无</span></div><div class="cardText">只发链接：仅登记，标「待补数据」，不做复盘分析。<br>链接 + 数据：登记后再看涨粉、收藏和评论。<br><br>IP 号不看 GMV、不算 ROI、不做投流，这个号现阶段只做涨粉。</div><div class="chips" style="margin-top:10px"><button class="chip copy" data-copy="ipNoteData">复制笔记数据模板</button></div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M4 19h16M7 16v-5M12 16v-8M17 16v-3"/></svg></span><span class="cardTitle">涨粉复盘看什么</span><span class="cardHint">先看这 4 个</span></div><div class="cardText"><b>封面点击</b>：封面大字是否一眼看懂谁在说。<br><b>前 3 秒留存</b>：第一句是不是直接抛痛点，而不是寒暄。<br><b>收藏</b>：收藏高说明说出了可被保存的感受。<br><b>评论与关注</b>：评论里出现「我也是」最多，说明选题对；关注转化低，说明只是共鸣、没记住你是谁。<br><br><b>按信号改</b>：点击低改封面；留存低改开头；收藏低补具体细节；关注低就固定一句属于你的表达方式。</div></div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="cardTitle">风控自检</span><span class="cardHint"><b data-risk>0</b> / 6</span></div>'+
+'<div class="item" data-risk-id="r1"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">全程没有出现商品、价格、链接</div></div></div>'+
+'<div class="item" data-risk-id="r2"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">没有卖惨、没有控诉具体的人</div></div></div>'+
+'<div class="item" data-risk-id="r3"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">没有暗示治疗、矫正或医疗判断</div></div></div>'+
+'<div class="item" data-risk-id="r4"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">没有引导去微信、私信、站外</div></div></div>'+
+'<div class="item" data-risk-id="r5"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">没有极限词、没有制造对立</div></div></div>'+
+'<div class="item" data-risk-id="r6"><div class="dot">✓</div><div class="itemBody"><div class="itemLabel">内容和带货号完全没混</div></div></div>'+
+'</div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></span><span class="cardTitle">今日预审结论</span></div><div class="cardText">口播与图文均未出现商品、极限词、医疗断言和站外导流，<span class="chip sage mini">预审通过</span><br><br>发布权只在你手上，工作台不代发。</div></div>'
+};
+
+MODULES.chat = {label:"AI 对话", html:
+'<div class="noteBar">在这里直接聊，不用来回切窗口。第一次用先填下面三项，存在这台设备上，只发给本地服务，不上传别处。</div>'+
+'<div class="card"><div class="cardHead"><span class="cardIco"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1-2-3-2 1a7 7 0 0 0-1.7-1L15 4h-4l-.2 2a7 7 0 0 0-1.7 1L7 6 5 9l2 1a7 7 0 0 0 0 2l-2 1 2 3 2-1a7 7 0 0 0 1.7 1L11 20h4l.2-2a7 7 0 0 0 1.7-1l2 1 2-3-2-1c.1-.3.1-.7.1-1z"/></svg></span><span class="cardTitle">接口设置</span><span class="cardHint">填一次就记住</span></div>'+
+'<div class="cfgRow"><label>接口地址</label><input class="cfgInput" id="cfgBase" value="https://api.deepseek.com/v1/chat/completions"></div>'+
+'<div class="cfgRow"><label>模型名</label><input class="cfgInput" id="cfgModel" value="deepseek-chat"></div>'+
+'<div class="cfgRow"><label>API Key</label><input class="cfgInput" id="cfgKey" type="password" placeholder="sk-... 去 platform.deepseek.com 复制"></div>'+
+'<div class="chips" style="margin-top:10px"><button class="chip on" id="cfgSave">保存</button><button class="chip ghost" id="cfgTest">测试连接</button><button class="chip ghost" id="cfgClear">清空对话</button></div>'+
+'<div class="feedTip" id="cfgTip">地址和模型已按 DeepSeek 填好，只需填一次 Key，存在你这台设备上，不会上传。填完点保存，再点测试连接。</div></div>'+
+'<div class="chatLog" id="chatLog"></div>'+
+'<div class="chatBar"><textarea class="chatInput" id="chatInput" placeholder="直接问；手机上点键盘右下角的麦克风就能说话；也可以把小红书链接粘进来让我拆解"></textarea><button class="chip ghost" id="chatMic">语音</button><button class="chip on" id="chatSend">发送</button></div>'
+};
+
+var panel = document.getElementById('panel');
+var rail = document.getElementById('rail');
+var speaking = false;
+
+var K_TODO='amanda_todo_261111', K_RISK='amanda_risk_261111', K_SEL='amanda_sel_261111', K_PICK='amanda_pick_261111', K_FEED='amanda_feed_261111';
+var K_CFG='amanda_chatcfg_261111', K_MSG='amanda_chatmsg_261111';
+var K_ACC='amanda_acc_261111';
+var ACC=read(K_ACC,'sale');
+function kAcc(base){ return ACC==='ip' ? base+'_ip' : base; }
+function read(k,def){ try{ var v=JSON.parse(localStorage.getItem(k)); return v===null?def:v; }catch(e){ return def; } }
+function write(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+function stopSpeak(){
+  if('speechSynthesis' in window){ window.speechSynthesis.cancel(); }
+  speaking=false; var b=panel.querySelector('.ttsBtn'); if(b){b.classList.remove('on');b.textContent='朗读';}
+}
+function speakText(t){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(t); u.lang='zh-CN'; u.rate=0.95;
+  u.onend=function(){speaking=false;var b=panel.querySelector('.ttsBtn');if(b){b.classList.remove('on');b.textContent='朗读';}};
+  window.speechSynthesis.speak(u);
+}
+
+function render(key){
+  stopSpeak();
+  var m=(ACC==='ip'&&MODULES_IP[key])?MODULES_IP[key]:(MODULES[key]||MODULES_IP[key]);
+  if(!m) return;
+  panel.innerHTML='<div class="card" style="padding:0;background:transparent;box-shadow:none;margin:0 0 12px"><div class="cardHead" style="margin:0;padding:0 3px"><span class="cardTitle" style="font-size:17px;letter-spacing:.04em">'+m.label+'</span><button class="chip ghost ttsBtn">朗读</button></div></div>'+m.html;
+  Array.prototype.forEach.call(rail.querySelectorAll('.navItem'),function(b){ b.classList.toggle('active', b.getAttribute('data-key')===key); });
+  window.scrollTo(0,0);
+  if(typeof fillDates==='function') fillDates();
+
+  var tts=panel.querySelector('.ttsBtn');
+  if(tts){ tts.addEventListener('click',function(){
+    if(speaking){ stopSpeak(); return; }
+    speaking=true; tts.classList.add('on'); tts.textContent='停止';
+    speakText(panel.innerText.replace(/\n+/g,'。').replace(/朗读|复制|已复制/g,'').replace(/。+/g,'。').slice(0,6000));
+  }); }
+
+  Array.prototype.forEach.call(panel.querySelectorAll('.chip.copy'),function(btn){
+    btn.addEventListener('click',function(){ copyText(btn.getAttribute('data-copy-text')||COPY[btn.getAttribute('data-copy')]||'',btn); });
+  });
+
+  bindChips(); bindChecks(); bindPick(); bindFeed(); bindChat();
+}
+
+function chatSystem(){
+  var ip = ACC==='ip';
+  return '你是 Amanda 的小红书运营助手，只回答小红书运营相关的事。'+
+    (ip
+      ? '当前账号：IP号「清醒Amanda｜孕期日常」，孕21周二胎妈妈，孕中期分开，独自带8岁女儿。人设是记录每天在干嘛、吃什么、怎么过。'+
+        '内容以图文为主（8成图文2成视频，只有需要动作演示才拍视频）。不带货、不挂商品、不挂链接，变现只接品牌广告，广告必须蒲公英报备。'+
+        '不卖惨、不控诉具体的人、不涉医疗判断。'
+      : '当前账号：带货号「兰叙孕中期」，孕产与儿童好物实测，零情感零故事。'+
+        '每条必须回答「用户为什么要在我这里买」：真实自用、筛选标准、实测细节、优缺点、适合与不适合谁。商业笔记必须蒲公英报备。')+
+    '回答规则：先抛痛点再给结论；给可直接用的文案、结构或清单，不写空话；数据不全就说不知道，不编造热度、价格、销量或平台规则。'+
+    '回复用中文，简洁，能用短句就不用长句。';
+}
+
+function bindChat(){
+  var log=panel.querySelector('#chatLog');
+  if(!log) return;
+  var cfg=read(K_CFG,{base:'',model:'',key:''});
+  var baseEl=panel.querySelector('#cfgBase'), modelEl=panel.querySelector('#cfgModel'), keyEl=panel.querySelector('#cfgKey');
+  if(cfg.base) baseEl.value=cfg.base;
+  if(cfg.model) modelEl.value=cfg.model;
+  if(keyEl) keyEl.value=cfg.key||'';
+  var tip=panel.querySelector('#cfgTip');
+  var say=function(t){ if(tip) tip.textContent=t; };
+  if(keyEl) keyEl.addEventListener('input',function(){
+    var n=(keyEl.value||'').replace(/\s/g,'').length;
+    if(n) say('Key 已填入 '+n+' 位（DeepSeek 的 Key 通常是 35 位左右）。点保存，再点测试连接。');
+  });
+
+  function draw(){
+    var msgs=read(K_MSG,[]);
+    log.innerHTML='';
+    if(!msgs.length){
+      var h=document.createElement('div'); h.className='msg tip';
+      h.textContent='还没有对话。可以先问：今天发什么 / 帮我改写这条笔记 / 这条链接怎么拆。';
+      log.appendChild(h);
+    }
+    msgs.forEach(function(m){
+      var d=document.createElement('div');
+      d.className='msg '+(m.role==='user'?'me':'ai');
+      d.textContent=m.content;
+      log.appendChild(d);
+    });
+    window.scrollTo(0,document.body.scrollHeight);
+  }
+  draw();
+
+  var save=panel.querySelector('#cfgSave');
+  if(save) save.addEventListener('click',function(){
+    var c={base:(baseEl.value||'').trim(),model:(modelEl.value||'').trim(),key:(keyEl.value||'').trim()};
+    write(K_CFG,c);
+    say(c.base&&c.model?'已保存，可以直接在下面聊。':'接口地址和模型名没填完，这两项必须有。');
+  });
+  var clr=panel.querySelector('#cfgClear');
+  if(clr) clr.addEventListener('click',function(){ write(K_MSG,[]); draw(); say('对话已清空。'); });
+
+  var tst=panel.querySelector('#cfgTest');
+  if(tst) tst.addEventListener('click',function(){
+    var b=(baseEl.value||'').trim(), mo=(modelEl.value||'').trim(), k=(keyEl.value||'').trim();
+    if(!b||!mo){ say('接口地址和模型名要先填。'); return; }
+    say('正在连接…');
+    askModel({base_url:b,model:mo,api_key:k,messages:[{role:'user',content:'只回复两个字：正常'}]},
+             [{role:'user',content:'只回复两个字：正常'}])
+      .then(function(txt){ write(K_CFG,{base:b,model:mo,key:k}); say('连接成功，模型回：'+String(txt).slice(0,40)); })
+      .catch(function(e){ say('连接失败：'+(e&&e.message?e.message:'未知错误')); });
+  });
+
+  var input=panel.querySelector('#chatInput'), sendBtn=panel.querySelector('#chatSend');
+  var busy=false;
+
+  function directCall(b,mo,k,msgs){
+    if(!k) return Promise.reject(new Error('还没填 Key，先在上面填 DeepSeek 的 Key 再点保存。'));
+    return fetch(b,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},
+      body:JSON.stringify({model:mo,messages:[{role:'system',content:chatSystem()}].concat(msgs||[]),temperature:0.6,stream:false})})
+      .then(function(r){ return r.text().then(function(t){
+        var j=null; try{ j=JSON.parse(t); }catch(e){}
+        if(!r.ok) throw new Error((j&&j.error&&j.error.message)||('接口返回 '+r.status));
+        if(!j||!j.choices||!j.choices[0]) throw new Error('接口没有返回内容');
+        return j.choices[0].message.content;
+      });});
+  }
+  function askModel(payload,msgs){
+    return fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){ return r.text().then(function(t){
+        var j=null; try{ j=JSON.parse(t); }catch(e){}
+        if(r.ok&&j&&j.content) return j.content;
+        if(r.ok&&j&&j.error) throw new Error(j.error);
+        return directCall(payload.base_url,payload.model,payload.api_key,msgs);
+      });})
+      .catch(function(e){
+        if(e&&e.message&&e.message!=='Failed to fetch') throw e;
+        return directCall(payload.base_url,payload.model,payload.api_key,msgs);
+      });
+  }
+  function withTimeout(p,ms){
+    return new Promise(function(res,rej){
+      var t=setTimeout(function(){ rej(new Error('等了 '+Math.round(ms/1000)+' 秒没回应，检查手机网络再点一次')); },ms);
+      p.then(function(v){ clearTimeout(t); res(v); },function(e){ clearTimeout(t); rej(e); });
+    });
+  }
+  function send(){
+    if(busy) return;
+    var text=(input.value||'').trim(); if(!text) return;
+    var c=read(K_CFG,{base:'',model:'',key:''});
+    var bEl=panel.querySelector('#cfgBase'), mEl=panel.querySelector('#cfgModel'), kEl=panel.querySelector('#cfgKey');
+    if(!c.base) c.base=(bEl&&bEl.value?bEl.value.trim():'')||'https://api.deepseek.com/v1/chat/completions';
+    if(!c.model) c.model=(mEl&&mEl.value?mEl.value.trim():'')||'deepseek-chat';
+    if(!c.key) c.key=(kEl&&kEl.value?kEl.value.trim():'');
+    if(!c.base||!c.model){ say('接口地址和模型名没读到，刷新页面再试。'); return; }
+    if(!c.key){ toast('还没填 Key：点上面「API Key」框粘贴，再点保存'); if(kEl) kEl.focus(); return; }
+    write(K_CFG,c);
+    var msgs=read(K_MSG,[]);
+    msgs.push({role:'user',content:text});
+    write(K_MSG,msgs); input.value=''; draw();
+    busy=true; sendBtn.textContent='发送中';
+    var payload={base_url:c.base,model:c.model,api_key:c.key,
+      messages:[{role:'system',content:chatSystem()}].concat(msgs.slice(-12))};
+    withTimeout(askModel(payload, msgs.slice(-12)), 60000)
+      .then(function(out){
+        var m=read(K_MSG,[]); m.push({role:'assistant',content:String(out)}); write(K_MSG,m);
+      })
+      .catch(function(e){
+        var m=read(K_MSG,[]);
+        m.push({role:'assistant',content:'发送失败：'+(e&&e.message?e.message:'未知错误')+'\n（检查 Key 是否正确、账户是否有余额）'});
+        write(K_MSG,m);
+      })
+      .then(function(){ busy=false; sendBtn.textContent='发送'; draw(); });
+  }
+  if(sendBtn) sendBtn.addEventListener('click',send);
+  if(input) input.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); send(); }
+  });
+
+  var mic=panel.querySelector('#chatMic');
+  if(mic) mic.addEventListener('click',function(){
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){ input.focus(); toast('这个浏览器不给网页用麦克风。点键盘右下角 🎤 说话，字会自己进来'); return; }
+    if(!window.isSecureContext){ input.focus(); toast('语音只能在 https 网址下用，请用 amanda-xhs2026.netlify.app 打开'); return; }
+    var rec=new SR(); rec.lang='zh-CN'; rec.interimResults=true; rec.continuous=false;
+    var startVal=(input.value||'')+(input.value?' ':'');
+    rec.onstart=function(){ mic.classList.add('on'); mic.textContent='听…'; };
+    rec.onresult=function(e){
+      var t='';
+      for(var i=e.resultIndex;i<e.results.length;i++) t+=e.results[i][0].transcript;
+      input.value=startVal+t;
+    };
+    rec.onerror=function(ev){
+      mic.classList.remove('on'); mic.textContent='语音';
+      if(ev&&ev.error==='not-allowed') toast('麦克风被拦了：设置 → Safari → 麦克风，允许访问后再点');
+      else toast('没听清，再说一次试试');
+    };
+    rec.onend=function(){ mic.classList.remove('on'); mic.textContent='语音'; input.focus(); };
+    rec.start();
+  });
+}
+
+function bindFeed(){
+  var box=panel.querySelector('#feedBox'), tip=panel.querySelector('#feedTip');
+  if(!box) return;
+  box.value=read(K_FEED,'');
+  var say=function(t){ if(tip) tip.textContent=t; };
+  var s=panel.querySelector('#feedSave');
+  if(s) s.addEventListener('click',function(){ write(K_FEED,box.value); say('已存到这台设备，下次打开还在。'); });
+  var g=panel.querySelector('#feedGo');
+  if(g) g.addEventListener('click',function(){
+    if(!box.value.trim()){ say('箱子里还是空的，先粘一条链接进来。'); return; }
+    copyText('帮我拆解这箱对标笔记，按链接 → 热度 → 拆解顺序给：\n\n'+box.value, g);
+    say('已复制。把它贴到我们的聊天里发我，我马上拆。');
+  });
+  var c=panel.querySelector('#feedClear');
+  if(c) c.addEventListener('click',function(){ box.value=''; write(K_FEED,''); say('已清空。'); });
+  box.addEventListener('input',function(){ write(K_FEED,box.value); });
+}
+
+function copyText(t,btn){
+  var ok=function(){ btn.classList.add('done'); btn.textContent='已复制'; setTimeout(function(){btn.classList.remove('done');btn.textContent=btn.getAttribute('orig')||'复制';},1500); };
+  if(!btn.getAttribute('orig')){ btn.setAttribute('orig',btn.textContent); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(ok).catch(function(){fb(t,ok);}); }
+  else { fb(t,ok); }
+}
+function fb(t,ok){ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); ok(); }
+
+function bindChips(){
+  var sel=read(kAcc(K_SEL),{});
+  Array.prototype.forEach.call(panel.querySelectorAll('[data-group]'),function(el){
+    if(el.tagName==='BUTTON') return;
+    var g=el.getAttribute('data-group');
+    Array.prototype.forEach.call(el.querySelectorAll('.chip'),function(c){
+      if(sel[g]===c.getAttribute('data-val')) c.classList.add('on');
+      c.addEventListener('click',function(){
+        var s=read(kAcc(K_SEL),{}); s[g]=c.getAttribute('data-val'); write(kAcc(K_SEL),s); render(currentKey);
+      });
+    });
+  });
+}
+
+var currentKey=null;
+
+function bindChecks(){
+  var todo=read(kAcc(K_TODO),[]);
+  Array.prototype.forEach.call(panel.querySelectorAll('.item[data-id]'),function(it){
+    if(todo.indexOf(it.getAttribute('data-id'))>-1) it.classList.add('on');
+    it.addEventListener('click',function(){
+      var d=read(kAcc(K_TODO),[]); var id=it.getAttribute('data-id'); var i=d.indexOf(id);
+      if(i>-1){d.splice(i,1);it.classList.remove('on');}else{d.push(id);it.classList.add('on');}
+      write(kAcc(K_TODO),d); syncCounts();
+    });
+  });
+  var risk=read(kAcc(K_RISK),[]);
+  Array.prototype.forEach.call(panel.querySelectorAll('.item[data-risk-id]'),function(it){
+    if(risk.indexOf(it.getAttribute('data-risk-id'))>-1) it.classList.add('on');
+    it.addEventListener('click',function(){
+      var d=read(kAcc(K_RISK),[]); var id=it.getAttribute('data-risk-id'); var i=d.indexOf(id);
+      if(i>-1){d.splice(i,1);it.classList.remove('on');}else{d.push(id);it.classList.add('on');}
+      write(kAcc(K_RISK),d); syncCounts();
+    });
+  });
+  syncCounts();
+}
+
+function bindPick(){
+  var pick=read(kAcc(K_PICK),null);
+  Array.prototype.forEach.call(panel.querySelectorAll('[data-pick]'),function(b){
+    if(pick===b.getAttribute('data-pick')){ b.classList.add('on'); b.textContent='已圈选'; }
+    b.addEventListener('click',function(){
+      var cur=read(kAcc(K_PICK),null); var id=b.getAttribute('data-pick');
+      write(kAcc(K_PICK), cur===id?null:id);
+      render(currentKey);
+    });
+  });
+}
+
+function syncCounts(){
+  var t=read(kAcc(K_TODO),[]).length, r=read(kAcc(K_RISK),[]).length;
+  Array.prototype.forEach.call(panel.querySelectorAll('[data-done]'),function(el){ el.textContent=t; });
+  Array.prototype.forEach.call(panel.querySelectorAll('[data-risk]'),function(el){ el.textContent=r; });
+  Array.prototype.forEach.call(panel.querySelectorAll('[data-bar]'),function(el){ el.style.width=Math.round(t/7*100)+'%'; });
+}
+
+Array.prototype.forEach.call(rail.querySelectorAll('.navItem'),function(b){
+  b.addEventListener('click',function(){ currentKey=b.getAttribute('data-key'); render(currentKey); });
+});
+
+function setAcc(a,isInit){
+  ACC=(a==='ip')?'ip':'sale'; write(K_ACC,ACC);
+  Array.prototype.forEach.call(document.querySelectorAll('.accBtn'),function(b){
+    b.classList.toggle('on', b.getAttribute('data-acc')===ACC);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-acc-title]'),function(el){
+    el.textContent = ACC==='ip' ? '清醒Amanda' : '兰叙孕中期';
+  });
+  if(isInit) return;
+  if(!currentKey){ currentKey='overview'; }
+  render(currentKey);
+}
+Array.prototype.forEach.call(document.querySelectorAll('.accBtn'),function(b){
+  b.addEventListener('click',function(){ setAcc(b.getAttribute('data-acc')); });
+});
+setAcc(ACC,true);
+fillDates();
+setInterval(fillDates,60000);
+
+
+/* 日期跟随设备，不写死 */
+function fillDates(){
+  var n=new Date();
+  var w=['周日','周一','周二','周三','周四','周五','周六'][n.getDay()];
+  var mm=('0'+(n.getMonth()+1)).slice(-2), dd=('0'+n.getDate()).slice(-2);
+  var full=n.getFullYear()+'.'+mm+'.'+dd;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-d1]'),function(e){ e.textContent=mm+'.'+dd; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-d2]'),function(e){ e.textContent=w; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-d3]'),function(e){ e.textContent=full; });
+}
+
+/* 全局提示条：手机上看得到的黑底提示 */
+var _toastT=null;
+function toast(t){
+  var el=document.getElementById('toast');
+  if(!el){ el=document.createElement('div'); el.id='toast'; document.body.appendChild(el); }
+  el.textContent=t; el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT=setTimeout(function(){ el.classList.remove('show'); },3600);
+}
+
+(function(){
+  function killBadge(){
+    Array.prototype.forEach.call(document.querySelectorAll('#netlify-badge, #nl-badge-frame, [id*="netlify-badge"], [id*="badge"], iframe[src*="netlify.com/badge"]'),function(el){
+      if(el&&el.parentNode) el.parentNode.removeChild(el);
+    });
+  }
+  killBadge();
+  try{ new MutationObserver(killBadge).observe(document.body,{childList:true,subtree:true}); }catch(e){}
+})();
+</script>
+</body>
+</html>
